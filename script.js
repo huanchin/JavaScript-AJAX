@@ -91,6 +91,7 @@ const renderCountry = function (data, className = '') {
 // };
 
 /***** method 2.1 with Encapsulation (fetch + then(error handle + parse to JSON))******/
+
 const getJSON = function (url, errorMsg = 'Somthing went wrong') {
   return fetch(url).then(response => {
     /*** reject promise (throwing errors) manually ***/
@@ -118,6 +119,30 @@ const getCountryData = function (country) {
     });
 };
 
+/***** example 2  Where am I ? ******/
+
 btn.addEventListener('click', () => {
-  getCountryData('australia');
+  navigator.geolocation.getCurrentPosition(pos => {
+    console.log(pos.coords.latitude, pos.coords.longitude);
+    fetch(`https://geocode.xyz/${pos.coords.latitude},${pos.coords.longitude}?geoit=JSON`)
+      .then(geoResponse => geoResponse.json())
+      .then(data => {
+        if (data.distance == 'Throttled! See geocode.xyz/pricing') {
+          throw new Error(`Throttled...`);
+        }
+        console.log(data);
+        return fetch(`https://restcountries.com/v2/name/${data.country}`);
+      })
+      .then(response => {
+        /*** reject promise (throwing errors) manually ***/
+        if (!response.ok) throw new Error(`Country not found! (${response.status})`);
+
+        return response.json();
+      })
+      .then(data => renderCountry(data[0]))
+      .catch(err => alert(`Somthing went wrong: ${err.message}. Try again!`))
+      .finally(() => {
+        countriesContainer.style.opacity = 1;
+      });
+  });
 });
