@@ -121,28 +121,72 @@ const getCountryData = function (country) {
 
 /***** example 2  Where am I ? ******/
 
-btn.addEventListener('click', () => {
-  navigator.geolocation.getCurrentPosition(pos => {
-    console.log(pos.coords.latitude, pos.coords.longitude);
-    fetch(`https://geocode.xyz/${pos.coords.latitude},${pos.coords.longitude}?geoit=JSON`)
-      .then(geoResponse => geoResponse.json())
-      .then(data => {
-        if (data.distance == 'Throttled! See geocode.xyz/pricing') {
-          throw new Error(`Throttled...`);
-        }
-        console.log(data);
-        return fetch(`https://restcountries.com/v2/name/${data.country}`);
-      })
-      .then(response => {
-        /*** reject promise (throwing errors) manually ***/
-        if (!response.ok) throw new Error(`Country not found! (${response.status})`);
+// btn.addEventListener('click', () => {
+//   navigator.geolocation.getCurrentPosition(pos => {
+//     console.log(pos.coords.latitude, pos.coords.longitude);
+//     fetch(`https://geocode.xyz/${pos.coords.latitude},${pos.coords.longitude}?geoit=JSON`)
+//       .then(geoResponse => geoResponse.json())
+//       .then(data => {
+//         if (data.distance == 'Throttled! See geocode.xyz/pricing') {
+//           throw new Error(`Throttled...`);
+//         }
+//         console.log(data);
+//         return fetch(`https://restcountries.com/v2/name/${data.country}`);
+//       })
+//       .then(response => {
+//         /*** reject promise (throwing errors) manually ***/
+//         if (!response.ok) throw new Error(`Country not found! (${response.status})`);
 
-        return response.json();
-      })
-      .then(data => renderCountry(data[0]))
-      .catch(err => alert(`Somthing went wrong: ${err.message}. Try again!`))
-      .finally(() => {
-        countriesContainer.style.opacity = 1;
-      });
+//         return response.json();
+//       })
+//       .then(data => renderCountry(data[0]))
+//       .catch(err => alert(`Somthing went wrong: ${err.message}. Try again!`))
+//       .finally(() => {
+//         countriesContainer.style.opacity = 1;
+//       });
+//   });
+// });
+
+/***** Promisifying Geolocation *****/
+
+const getPosition = function () {
+  return new Promise((resolve, reject) => {
+    // navigator.geolocation.getCurrentPosition(
+    //   pos => resolve(pos),
+    //   err => reject(err),
+    // );
+    navigator.geolocation.getCurrentPosition(resolve, reject);
   });
+};
+
+const getWhere = function (lat, lng) {
+  fetch(`https://geocode.xyz/${lat},${lng}?geoit=JSON`)
+    .then(geoResponse => geoResponse.json())
+    .then(data => {
+      if (data.distance == 'Throttled! See geocode.xyz/pricing') {
+        throw new Error(`Throttled...`);
+      }
+      console.log(data);
+      return fetch(`https://restcountries.com/v2/name/${data.country}`);
+    })
+    .then(response => {
+      /*** reject promise (throwing errors) manually ***/
+      if (!response.ok) throw new Error(`Country not found! (${response.status})`);
+
+      return response.json();
+    })
+    .then(data => renderCountry(data[0]))
+    .catch(err => alert(`Somthing went wrong: ${err.message}. Try again!`))
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    });
+};
+
+btn.addEventListener('click', () => {
+  getPosition()
+    .then(pos => {
+      getWhere(pos.coords.latitude, pos.coords.longitude);
+      console.log(pos.coords.latitude, pos.coords.longitude);
+    })
+    .catch(err => console.log(err));
 });
