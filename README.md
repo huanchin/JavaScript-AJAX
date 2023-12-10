@@ -7,5 +7,5 @@ Thhis project demonstrate AJAX call by using
 
 there are basically two ways for doing AJAX calls:
 
-1. traditional way: XMLHttpRequest
-2. modern way: Promises
+1. traditional way: XMLHttpRequest + callback hell
+2. modern way: Fetch API + Promises
